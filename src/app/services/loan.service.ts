@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Loan, AmortizationRow } from '../models/loan.model';
 
 const STORAGE_KEY = 'loan_tracker_angular_v1';
@@ -18,7 +18,6 @@ export const INITIAL_LOANS: Loan[] = [
     defaultVrushaliPrepay: 35000,
     color: 'emerald',
     overrides: {
-      // Pre-planned April bonuses from sheet
       '2027-04': { bonusPrepayment: 200000, reason: 'Annual Bonus' },
       '2028-04': { bonusPrepayment: 200000, reason: 'Annual Bonus' },
     }
@@ -44,11 +43,14 @@ export const INITIAL_LOANS: Loan[] = [
   providedIn: 'root'
 })
 export class LoanService {
-  loans = signal<Loan[]>(this.loadFromStorage());
+  loans = signal<Loan[]>(this.loadInitial());
+  syncStatus = signal<'synced' | 'saving' | 'offline'>('synced');
 
-  constructor() {}
+  constructor() {
+    this.syncFromCloud();
+  }
 
-  private loadFromStorage(): Loan[] {
+  private loadInitial(): Loan[] {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -60,12 +62,52 @@ export class LoanService {
     return INITIAL_LOANS;
   }
 
-  saveToStorage(loans: Loan[]) {
-    this.loans.set(loans);
+  // Fetch latest JSON from Vercel Blob store
+  async syncFromCloud() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(loans));
+      const res = await fetch('/api/get-data');
+      if (res.ok) {
+        const cloudData = await res.json();
+        if (Array.isArray(cloudData) && cloudData.length > 0) {
+          this.loans.set(cloudData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+          this.syncStatus.set('synced');
+          return;
+        }
+      }
     } catch (e) {
-      console.error('Failed writing localStorage', e);
+      console.warn('Could not sync from cloud, running with local data', e);
+      this.syncStatus.set('offline');
+    }
+  }
+
+  // Save to both localStorage and Vercel Blob
+  async persist(updatedLoans: Loan[]) {
+    this.loans.set(updatedLoans);
+    this.syncStatus.set('saving');
+
+    // 1. Instant local persistence
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLoans));
+    } catch (e) {
+      console.error('Failed saving localStorage', e);
+    }
+
+    // 2. Cloud persistence via Vercel Blob
+    try {
+      const res = await fetch('/api/save-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedLoans)
+      });
+      if (res.ok) {
+        this.syncStatus.set('synced');
+      } else {
+        this.syncStatus.set('offline');
+      }
+    } catch (e) {
+      console.warn('Cloud save failed, local data is safe', e);
+      this.syncStatus.set('offline');
     }
   }
 
@@ -77,19 +119,11 @@ export class LoanService {
       currentOverrides[monthKey] = { ...existing, ...partial };
       return { ...l, overrides: currentOverrides };
     });
-    this.saveToStorage(updated);
-  }
-
-  updateLoanConfig(loanId: string, partial: Partial<Loan>) {
-    const updated = this.loans().map(l => {
-      if (l.id !== loanId) return l;
-      return { ...l, ...partial };
-    });
-    this.saveToStorage(updated);
+    this.persist(updated);
   }
 
   resetToDefault() {
-    this.saveToStorage(INITIAL_LOANS);
+    this.persist(INITIAL_LOANS);
   }
 
   computeSchedule(loan: Loan): { schedule: AmortizationRow[]; debtFreeMonth: string; totalInterest: number; totalPrepayment: number } {
@@ -103,7 +137,6 @@ export class LoanService {
     let totalPrepayment = 0;
     let debtFreeMonth = 'Never';
 
-    // safety cap at 360 months (30 years)
     for (let i = 0; i < 360; i++) {
       if (balance <= 0) break;
 
@@ -122,16 +155,12 @@ export class LoanService {
       const interestForMonth = Math.round(balance * monthlyRate);
       totalInterest += interestForMonth;
 
-      // Regular EMI principal portion
       let emiPrincipal = currentEMI - interestForMonth;
-      if (emiPrincipal < 0) emiPrincipal = 0; // Negative amortization guard
+      if (emiPrincipal < 0) emiPrincipal = 0;
 
-      let totalPrincipalReduction = emiPrincipal + prepay;
-      let effectivePaidEMI = currentEMI;
       let endBal = balance + interestForMonth - currentEMI - prepay;
 
       if (endBal < 0) {
-        // Loan fully settled in this month
         endBal = 0;
         debtFreeMonth = `${monthNames[month - 1]} ${year}`;
       }
@@ -145,7 +174,7 @@ export class LoanService {
         monthName: monthNames[month - 1],
         startBalance: balance,
         rate: currentRate,
-        emi: effectivePaidEMI,
+        emi: currentEMI,
         surajPrepay: suraj,
         vrushaliPrepay: vrushali,
         bonusPrepay: bonus,
@@ -162,7 +191,6 @@ export class LoanService {
         break;
       }
 
-      // Next month
       month++;
       if (month > 12) {
         month = 1;

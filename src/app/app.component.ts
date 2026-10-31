@@ -1,5 +1,5 @@
 import { Component, computed, signal, inject } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LoanService } from './services/loan.service';
 import { Loan, AmortizationRow } from './models/loan.model';
@@ -14,12 +14,11 @@ type ActiveTab = 'dashboard' | 'rama-sbi' | 'gera-hdfc' | 'settings';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  private loanService = inject(LoanService);
+  public loanService = inject(LoanService);
 
   activeTab = signal<ActiveTab>('dashboard');
   loans = this.loanService.loans;
 
-  // Modal edit state for a specific month
   editingRow = signal<{ loanId: string; row: AmortizationRow } | null>(null);
   editForm = {
     surajPrepay: 0,
@@ -30,7 +29,6 @@ export class AppComponent {
     reason: ''
   };
 
-  // Quick reason presets
   reasons = [
     'Paid as planned',
     'Annual Bonus Added',
@@ -40,15 +38,12 @@ export class AppComponent {
     'Partial: Lower savings this month'
   ];
 
-  // Rama computation
   ramaLoan = computed(() => this.loans().find(l => l.id === 'rama-sbi')!);
   ramaData = computed(() => this.loanService.computeSchedule(this.ramaLoan()));
 
-  // Gera computation
   geraLoan = computed(() => this.loans().find(l => l.id === 'gera-hdfc')!);
   geraData = computed(() => this.loanService.computeSchedule(this.geraLoan()));
 
-  // Portfolio Totals
   totalOutstanding = computed(() => {
     return this.ramaLoan().currentPrincipal + this.geraLoan().currentPrincipal;
   });
@@ -121,7 +116,6 @@ export class AppComponent {
     }).format(val);
   }
 
-  // Export JSON backup
   exportBackup() {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.loans(), null, 2));
     const dlAnchorElem = document.createElement('a');
@@ -130,7 +124,6 @@ export class AppComponent {
     dlAnchorElem.click();
   }
 
-  // Import JSON backup
   importBackup(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -140,8 +133,8 @@ export class AppComponent {
       try {
         const parsed = JSON.parse(e.target?.result as string);
         if (Array.isArray(parsed)) {
-          this.loanService.saveToStorage(parsed);
-          alert('Backup restored successfully!');
+          this.loanService.persist(parsed);
+          alert('Backup restored and synced to cloud successfully!');
         }
       } catch (err) {
         alert('Invalid JSON backup file.');

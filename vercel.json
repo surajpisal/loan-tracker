@@ -5,7 +5,7 @@
   "outputDirectory": "dist/loan-tracker/browser",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

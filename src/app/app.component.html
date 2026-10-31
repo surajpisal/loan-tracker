@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-24">
 
-  <!-- Top App Bar -->
+  <!-- Top App Bar with Cloud Sync Status -->
   <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
     <div class="flex items-center space-x-3">
       <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
@@ -12,8 +12,15 @@
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-        ● Live
+      <!-- Sync Status Badge -->
+      <span *ngIf="loanService.syncStatus() === 'synced'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        ● Cloud Synced
+      </span>
+      <span *ngIf="loanService.syncStatus() === 'saving'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        ● Saving...
+      </span>
+      <span *ngIf="loanService.syncStatus() === 'offline'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+        ● Local Only
       </span>
     </div>
   </header>
@@ -28,28 +35,24 @@
       
       <!-- Key Executive Summary Cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <!-- Card 1 -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
           <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Outstanding</p>
           <p class="text-xl font-bold text-white mt-1 font-mono tracking-tight">{{ formatINR(totalOutstanding()) }}</p>
           <div class="mt-2 text-[11px] text-slate-400">Rama (SBI) + Gera (HDFC)</div>
         </div>
 
-        <!-- Card 2 -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
           <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Monthly Total EMI</p>
           <p class="text-xl font-bold text-indigo-400 mt-1 font-mono tracking-tight">{{ formatINR(totalEMI()) }}</p>
           <div class="mt-2 text-[11px] text-slate-400">Due 5th every month</div>
         </div>
 
-        <!-- Card 3 -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
           <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Monthly Prepay</p>
           <p class="text-xl font-bold text-emerald-400 mt-1 font-mono tracking-tight">{{ formatINR(totalPlannedPrepayment()) }}</p>
           <div class="mt-2 text-[11px] text-slate-400">Suraj + Vrushali (1st-3rd)</div>
         </div>
 
-        <!-- Card 4 -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
           <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Debt-Free Goal</p>
           <p class="text-xl font-bold text-amber-400 mt-1 tracking-tight">{{ portfolioDebtFree() }}</p>
@@ -135,7 +138,7 @@
 
       </div>
 
-      <!-- Prepayment Reminder Callout -->
+      <!-- Action Routine Banner -->
       <div class="bg-slate-900/80 border border-indigo-500/20 rounded-2xl p-4 flex items-center space-x-3 text-xs text-slate-300">
         <span class="text-lg">🗓️</span>
         <div>
@@ -149,8 +152,6 @@
     <!-- TAB 2: RAMA SBI FULL SCHEDULE -->
     <!-- ========================================== -->
     <div *ngIf="activeTab() === 'rama-sbi'" class="space-y-4 animate-fadeIn">
-      
-      <!-- Screen Header with Summary -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
@@ -182,7 +183,6 @@
         </div>
       </div>
 
-      <!-- Schedule Cards Table -->
       <div class="space-y-2.5">
         <div class="flex items-center justify-between px-1">
           <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Month-By-Month Amortization</span>
@@ -211,7 +211,6 @@
             </div>
           </div>
 
-          <!-- Sub Row Details -->
           <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 font-mono">
             <div>
               <span>EMI: </span><span class="text-slate-200">{{ formatINR(row.emi) }}</span>
@@ -224,7 +223,6 @@
             </div>
           </div>
 
-          <!-- Note/Reason badge if any -->
           <div *ngIf="row.reason || row.bonusPrepay > 0" class="mt-2 flex items-center space-x-1.5 text-[11px]">
             <span *ngIf="row.bonusPrepay > 0" class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">
               🎁 Bonus: {{ formatINR(row.bonusPrepay) }}
@@ -233,18 +231,14 @@
               💬 {{ row.reason }}
             </span>
           </div>
-
         </div>
       </div>
-
     </div>
 
     <!-- ========================================== -->
     <!-- TAB 3: GERA HDFC FULL SCHEDULE -->
     <!-- ========================================== -->
     <div *ngIf="activeTab() === 'gera-hdfc'" class="space-y-4 animate-fadeIn">
-      
-      <!-- Screen Header with Summary -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
@@ -276,7 +270,6 @@
         </div>
       </div>
 
-      <!-- Schedule Cards Table -->
       <div class="space-y-2.5">
         <div class="flex items-center justify-between px-1">
           <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Month-By-Month Amortization</span>
@@ -305,7 +298,6 @@
             </div>
           </div>
 
-          <!-- Sub Row Details -->
           <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 font-mono">
             <div>
               <span>EMI: </span><span class="text-slate-200">{{ formatINR(row.emi) }}</span>
@@ -318,16 +310,13 @@
             </div>
           </div>
 
-          <!-- Note/Reason badge if any -->
           <div *ngIf="row.reason" class="mt-2 flex items-center space-x-1.5 text-[11px]">
             <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
               💬 {{ row.reason }}
             </span>
           </div>
-
         </div>
       </div>
-
     </div>
 
     <!-- ========================================== -->
@@ -336,9 +325,15 @@
     <div *ngIf="activeTab() === 'settings'" class="space-y-6 animate-fadeIn">
       
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-        <h2 class="text-base font-bold text-white">Multi-Year Data Backup & Safety</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white">Vercel Blob Cloud Storage</h2>
+          <button (click)="loanService.syncFromCloud()" class="text-xs px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30">
+            🔄 Refresh from Cloud
+          </button>
+        </div>
+        
         <p class="text-xs text-slate-400 leading-relaxed">
-          Your loan amortization data is automatically saved to your browser. Use the buttons below to export a JSON backup file to your phone or Google Drive, or restore it on any device.
+          Your changes automatically sync to your private <strong>Vercel Blob storage</strong> in real time. Both you and your wife can use this app on separate devices and view the exact same data.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-3 pt-2">
@@ -355,7 +350,6 @@
         </div>
       </div>
 
-      <!-- Baseline Configurations -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
         <h2 class="text-base font-bold text-white">Configured Loans Summary</h2>
 
@@ -398,7 +392,6 @@
         <button (click)="closeEditModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
       </div>
 
-      <!-- Prepayment Fields -->
       <div class="space-y-3">
         <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Prepayment Configuration (1st–3rd)</label>
         
@@ -419,7 +412,6 @@
         </div>
       </div>
 
-      <!-- EMI and Rate Fields -->
       <div class="space-y-3 pt-2 border-t border-slate-800">
         <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Rate & EMI Adjustment</label>
         
@@ -435,7 +427,6 @@
         </div>
       </div>
 
-      <!-- Reason / Note -->
       <div class="space-y-2 pt-2 border-t border-slate-800">
         <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Reason / Audit Tag</span>
         <input type="text" [(ngModel)]="editForm.reason" placeholder="e.g. Paid as planned, Missed: Advance tax" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none">
@@ -447,7 +438,6 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="pt-3 border-t border-slate-800 flex items-center space-x-3">
         <button (click)="closeEditModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs">
           Cancel
@@ -460,36 +450,28 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MOBILE BOTTOM NAVIGATION MENU -->
-  <!-- ========================================== -->
+  <!-- Bottom Navigation -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-2 py-2">
     <div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center">
-      
-      <!-- Home Tab -->
       <button (click)="setActiveTab('dashboard')" [ngClass]="activeTab() === 'dashboard' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
         <span class="text-lg">📊</span>
         <span class="text-[11px] mt-0.5">Overview</span>
       </button>
 
-      <!-- Rama Tab -->
       <button (click)="setActiveTab('rama-sbi')" [ngClass]="activeTab() === 'rama-sbi' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
         <span class="text-lg">🏛️</span>
         <span class="text-[11px] mt-0.5">Rama (SBI)</span>
       </button>
 
-      <!-- Gera Tab -->
       <button (click)="setActiveTab('gera-hdfc')" [ngClass]="activeTab() === 'gera-hdfc' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
         <span class="text-lg">🏢</span>
         <span class="text-[11px] mt-0.5">Gera (HDFC)</span>
       </button>
 
-      <!-- Settings Tab -->
       <button (click)="setActiveTab('settings')" [ngClass]="activeTab() === 'settings' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
         <span class="text-lg">⚙️</span>
         <span class="text-[11px] mt-0.5">Backup</span>
       </button>
-
     </div>
   </nav>
 
