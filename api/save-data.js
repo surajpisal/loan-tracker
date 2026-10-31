@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     
     // Upload or overwrite loans-data.json
     const blob = await put('loans-data.json', JSON.stringify(data, null, 2), {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: false
     });
 
