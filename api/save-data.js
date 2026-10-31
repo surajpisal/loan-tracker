@@ -11,12 +11,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    let payload = req.body;
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch (e) {
+        // Already a string
+      }
+    }
 
-    const blob = await put('loans-data.json', JSON.stringify(data, null, 2), {
-      access: 'private',
+    const jsonString = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
+
+    const blob = await put('loans-data.json', jsonString, {
+      access: 'public',
       addRandomSuffix: false,
-      token: token
+      token: token,
+      contentType: 'application/json'
     });
 
     return res.status(200).json({ success: true, url: blob.url });
