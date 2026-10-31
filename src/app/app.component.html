@@ -1,0 +1,496 @@
+<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-24">
+
+  <!-- Top App Bar -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
+        LT
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white leading-none">Loan Tracker</h1>
+        <p class="text-xs text-slate-400 mt-1">Multi-Year Prepayment & Amortization</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        ● Live
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content Body -->
+  <main class="flex-1 p-4 max-w-4xl mx-auto w-full">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: CONSOLIDATED DASHBOARD -->
+    <!-- ========================================== -->
+    <div *ngIf="activeTab() === 'dashboard'" class="space-y-6 animate-fadeIn">
+      
+      <!-- Key Executive Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <!-- Card 1 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Outstanding</p>
+          <p class="text-xl font-bold text-white mt-1 font-mono tracking-tight">{{ formatINR(totalOutstanding()) }}</p>
+          <div class="mt-2 text-[11px] text-slate-400">Rama (SBI) + Gera (HDFC)</div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Monthly Total EMI</p>
+          <p class="text-xl font-bold text-indigo-400 mt-1 font-mono tracking-tight">{{ formatINR(totalEMI()) }}</p>
+          <div class="mt-2 text-[11px] text-slate-400">Due 5th every month</div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Monthly Prepay</p>
+          <p class="text-xl font-bold text-emerald-400 mt-1 font-mono tracking-tight">{{ formatINR(totalPlannedPrepayment()) }}</p>
+          <div class="mt-2 text-[11px] text-slate-400">Suraj + Vrushali (1st-3rd)</div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Debt-Free Goal</p>
+          <p class="text-xl font-bold text-amber-400 mt-1 tracking-tight">{{ portfolioDebtFree() }}</p>
+          <div class="mt-2 text-[11px] text-slate-400">Combined Clearance</div>
+        </div>
+      </div>
+
+      <!-- Quick Individual Loan Cards -->
+      <div class="space-y-4">
+        <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Individual Loan Status</h2>
+
+        <!-- Rama SBI Card -->
+        <div (click)="setActiveTab('rama-sbi')" class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800 hover:border-emerald-500/40 transition-all rounded-2xl p-5 cursor-pointer shadow-md group">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h3 class="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Rama Home Loan</h3>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">State Bank of India (SBI) • Due 5th</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Clear by {{ ramaData().debtFreeMonth }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-800/80 text-xs">
+            <div>
+              <span class="text-slate-400 block">Balance (Nov 2026)</span>
+              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ formatINR(ramaLoan().currentPrincipal) }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Rate & EMI</span>
+              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ ramaLoan().rate }}% / {{ formatINR(ramaLoan().emi) }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Monthly Prepay</span>
+              <span class="font-bold text-emerald-400 font-mono text-sm mt-0.5 block">{{ formatINR(ramaLoan().defaultSurajPrepay + ramaLoan().defaultVrushaliPrepay) }}</span>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between text-xs text-emerald-400 pt-2 font-medium">
+            <span>Suraj (45k) + Vrushali (35k) between 1st–3rd</span>
+            <span class="group-hover:translate-x-1 transition-transform">Open Full Schedule →</span>
+          </div>
+        </div>
+
+        <!-- Gera HDFC Card -->
+        <div (click)="setActiveTab('gera-hdfc')" class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800 hover:border-blue-500/40 transition-all rounded-2xl p-5 cursor-pointer shadow-md group">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition-colors">Gera Home Loan</h3>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">HDFC Bank • Due 5th</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              Clear by {{ geraData().debtFreeMonth }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-800/80 text-xs">
+            <div>
+              <span class="text-slate-400 block">Balance (Nov 2026)</span>
+              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ formatINR(geraLoan().currentPrincipal) }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Rate & EMI</span>
+              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ geraLoan().rate }}% / {{ formatINR(geraLoan().emi) }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Monthly Prepay</span>
+              <span class="font-bold text-blue-400 font-mono text-sm mt-0.5 block">{{ formatINR(geraLoan().defaultSurajPrepay + geraLoan().defaultVrushaliPrepay) }}</span>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between text-xs text-blue-400 pt-2 font-medium">
+            <span>Configurable prepayments & rate updates</span>
+            <span class="group-hover:translate-x-1 transition-transform">Open Full Schedule →</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Prepayment Reminder Callout -->
+      <div class="bg-slate-900/80 border border-indigo-500/20 rounded-2xl p-4 flex items-center space-x-3 text-xs text-slate-300">
+        <span class="text-lg">🗓️</span>
+        <div>
+          <span class="font-semibold text-white">Monthly Action Routine:</span> Prepayments are made between the <strong class="text-indigo-400">1st and 3rd</strong> of every month. EMI is auto-debited on the <strong class="text-indigo-400">5th</strong>.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: RAMA SBI FULL SCHEDULE -->
+    <!-- ========================================== -->
+    <div *ngIf="activeTab() === 'rama-sbi'" class="space-y-4 animate-fadeIn">
+      
+      <!-- Screen Header with Summary -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Rama Home Loan (SBI)</h2>
+            <p class="text-xs text-slate-400">Base Principal: ₹40.60L • Rate: 7.90% • EMI: ₹80,000</p>
+          </div>
+          <button (click)="setActiveTab('dashboard')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+            ← Dashboard
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-800 text-xs">
+          <div>
+            <span class="text-slate-400">Debt-Free In</span>
+            <p class="text-sm font-bold text-emerald-400 mt-0.5">{{ ramaData().debtFreeMonth }}</p>
+          </div>
+          <div>
+            <span class="text-slate-400">Total Prepayments</span>
+            <p class="text-sm font-bold text-white mt-0.5 font-mono">{{ formatINR(ramaData().totalPrepayment) }}</p>
+          </div>
+          <div>
+            <span class="text-slate-400">Suraj + Vrushali</span>
+            <p class="text-sm font-bold text-white mt-0.5">₹45k + ₹35k/mo</p>
+          </div>
+          <div>
+            <span class="text-slate-400">Prepayment Window</span>
+            <p class="text-sm font-bold text-indigo-400 mt-0.5">1st – 3rd of month</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule Cards Table -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Month-By-Month Amortization</span>
+          <span class="text-[11px] text-slate-500">Tap any month to edit</span>
+        </div>
+
+        <div *ngFor="let row of ramaData().schedule"
+             (click)="openEditModal('rama-sbi', row)"
+             class="bg-slate-900/90 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 transition rounded-xl p-3.5 cursor-pointer shadow-sm">
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <span class="px-2 py-1 rounded-md text-xs font-semibold bg-slate-800 text-slate-200 font-mono">
+                {{ row.displayDate }}
+              </span>
+              <span *ngIf="row.totalPrepayment > 0" class="text-xs font-medium text-emerald-400 font-mono">
+                +{{ formatINR(row.totalPrepayment) }} prepay
+              </span>
+              <span *ngIf="row.totalPrepayment === 0" class="text-xs text-amber-400 font-medium">
+                0 Prepay (Missed)
+              </span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-400">Remaining</span>
+              <p class="text-sm font-bold text-white font-mono">{{ formatINR(row.endBalance) }}</p>
+            </div>
+          </div>
+
+          <!-- Sub Row Details -->
+          <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 font-mono">
+            <div>
+              <span>EMI: </span><span class="text-slate-200">{{ formatINR(row.emi) }}</span>
+            </div>
+            <div>
+              <span>Interest: </span><span class="text-rose-400">{{ formatINR(row.interestCharged) }}</span>
+            </div>
+            <div>
+              <span>Rate: </span><span class="text-slate-200">{{ row.rate }}%</span>
+            </div>
+          </div>
+
+          <!-- Note/Reason badge if any -->
+          <div *ngIf="row.reason || row.bonusPrepay > 0" class="mt-2 flex items-center space-x-1.5 text-[11px]">
+            <span *ngIf="row.bonusPrepay > 0" class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">
+              🎁 Bonus: {{ formatINR(row.bonusPrepay) }}
+            </span>
+            <span *ngIf="row.reason" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+              💬 {{ row.reason }}
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: GERA HDFC FULL SCHEDULE -->
+    <!-- ========================================== -->
+    <div *ngIf="activeTab() === 'gera-hdfc'" class="space-y-4 animate-fadeIn">
+      
+      <!-- Screen Header with Summary -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Gera Home Loan (HDFC)</h2>
+            <p class="text-xs text-slate-400">Base Principal: ₹14,21,898 • Rate: 7.60% • EMI: ₹40,000</p>
+          </div>
+          <button (click)="setActiveTab('dashboard')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
+            ← Dashboard
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-800 text-xs">
+          <div>
+            <span class="text-slate-400">Debt-Free In</span>
+            <p class="text-sm font-bold text-blue-400 mt-0.5">{{ geraData().debtFreeMonth }}</p>
+          </div>
+          <div>
+            <span class="text-slate-400">Total Prepayments</span>
+            <p class="text-sm font-bold text-white mt-0.5 font-mono">{{ formatINR(geraData().totalPrepayment) }}</p>
+          </div>
+          <div>
+            <span class="text-slate-400">Current Prepayment</span>
+            <p class="text-sm font-bold text-white mt-0.5">₹0/mo (Adjustable)</p>
+          </div>
+          <div>
+            <span class="text-slate-400">EMI Auto-Debit</span>
+            <p class="text-sm font-bold text-indigo-400 mt-0.5">5th of every month</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule Cards Table -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Month-By-Month Amortization</span>
+          <span class="text-[11px] text-slate-500">Tap any month to add prepayment</span>
+        </div>
+
+        <div *ngFor="let row of geraData().schedule"
+             (click)="openEditModal('gera-hdfc', row)"
+             class="bg-slate-900/90 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 transition rounded-xl p-3.5 cursor-pointer shadow-sm">
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <span class="px-2 py-1 rounded-md text-xs font-semibold bg-slate-800 text-slate-200 font-mono">
+                {{ row.displayDate }}
+              </span>
+              <span *ngIf="row.totalPrepayment > 0" class="text-xs font-medium text-blue-400 font-mono">
+                +{{ formatINR(row.totalPrepayment) }} prepay
+              </span>
+              <span *ngIf="row.totalPrepayment === 0" class="text-xs text-slate-500">
+                Regular EMI only
+              </span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-400">Remaining</span>
+              <p class="text-sm font-bold text-white font-mono">{{ formatINR(row.endBalance) }}</p>
+            </div>
+          </div>
+
+          <!-- Sub Row Details -->
+          <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 font-mono">
+            <div>
+              <span>EMI: </span><span class="text-slate-200">{{ formatINR(row.emi) }}</span>
+            </div>
+            <div>
+              <span>Interest: </span><span class="text-rose-400">{{ formatINR(row.interestCharged) }}</span>
+            </div>
+            <div>
+              <span>Rate: </span><span class="text-slate-200">{{ row.rate }}%</span>
+            </div>
+          </div>
+
+          <!-- Note/Reason badge if any -->
+          <div *ngIf="row.reason" class="mt-2 flex items-center space-x-1.5 text-[11px]">
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+              💬 {{ row.reason }}
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: SETTINGS & BACKUP -->
+    <!-- ========================================== -->
+    <div *ngIf="activeTab() === 'settings'" class="space-y-6 animate-fadeIn">
+      
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+        <h2 class="text-base font-bold text-white">Multi-Year Data Backup & Safety</h2>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Your loan amortization data is automatically saved to your browser. Use the buttons below to export a JSON backup file to your phone or Google Drive, or restore it on any device.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button (click)="exportBackup()" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-indigo-600/20">
+            <span>⬇️</span>
+            <span>Export Backup File (.JSON)</span>
+          </button>
+
+          <label class="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs flex items-center justify-center space-x-2 transition border border-slate-700 cursor-pointer">
+            <span>⬆️</span>
+            <span>Restore Backup File</span>
+            <input type="file" accept=".json" (change)="importBackup($event)" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <!-- Baseline Configurations -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+        <h2 class="text-base font-bold text-white">Configured Loans Summary</h2>
+
+        <div class="space-y-3 text-xs">
+          <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-800">
+            <span class="font-bold text-emerald-400">Rama Home Loan (SBI)</span>
+            <p class="text-slate-400 mt-1">Starting Balance: ₹40,60,000 | Current Rate: 7.90% | EMI: ₹80,000</p>
+            <p class="text-slate-400">Prepayment Split: Suraj (₹45,000) + Vrushali (₹35,000) = ₹80,000/mo (Due 1st-3rd)</p>
+          </div>
+
+          <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-800">
+            <span class="font-bold text-blue-400">Gera Home Loan (HDFC)</span>
+            <p class="text-slate-400 mt-1">Starting Balance: ₹14,21,898 | Current Rate: 7.60% | EMI: ₹40,000</p>
+            <p class="text-slate-400">Prepayment: Configurable per month in schedule</p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800">
+          <button (click)="resetAll()" class="text-xs text-rose-400 hover:text-rose-300 font-medium">
+            Reset All Overrides to Original Defaults
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- EDIT MONTHLY PREPAYMENT BOTTOM SHEET MODAL -->
+  <!-- ========================================== -->
+  <div *ngIf="editingRow()" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+      
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white">Edit {{ editingRow()?.row?.displayDate }}</h3>
+          <p class="text-xs text-slate-400">Adjust prepayments, EMI, or interest rate</p>
+        </div>
+        <button (click)="closeEditModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
+      </div>
+
+      <!-- Prepayment Fields -->
+      <div class="space-y-3">
+        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Prepayment Configuration (1st–3rd)</label>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <span class="text-xs text-slate-400 mb-1 block">Suraj Share (₹)</span>
+            <input type="number" [(ngModel)]="editForm.surajPrepay" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-mono focus:border-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 mb-1 block">Vrushali Share (₹)</span>
+            <input type="number" [(ngModel)]="editForm.vrushaliPrepay" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-mono focus:border-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <span class="text-xs text-slate-400 mb-1 block">Bonus / Extra Lump Sum (₹)</span>
+          <input type="number" [(ngModel)]="editForm.bonusPrepay" placeholder="e.g. 200000 for April bonus" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-mono focus:border-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- EMI and Rate Fields -->
+      <div class="space-y-3 pt-2 border-t border-slate-800">
+        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Rate & EMI Adjustment</label>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <span class="text-xs text-slate-400 mb-1 block">EMI (Due 5th) (₹)</span>
+            <input type="number" [(ngModel)]="editForm.emi" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-mono focus:border-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 mb-1 block">Interest Rate (%)</span>
+            <input type="number" step="0.05" [(ngModel)]="editForm.rate" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-mono focus:border-indigo-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Reason / Note -->
+      <div class="space-y-2 pt-2 border-t border-slate-800">
+        <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Reason / Audit Tag</span>
+        <input type="text" [(ngModel)]="editForm.reason" placeholder="e.g. Paid as planned, Missed: Advance tax" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none">
+        
+        <div class="flex flex-wrap gap-1.5 pt-1">
+          <button *ngFor="let r of reasons" (click)="setReason(r)" type="button" class="text-[11px] px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+            {{ r }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-3 border-t border-slate-800 flex items-center space-x-3">
+        <button (click)="closeEditModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs">
+          Cancel
+        </button>
+        <button (click)="saveEditModal()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/20">
+          Save & Recalculate
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MOBILE BOTTOM NAVIGATION MENU -->
+  <!-- ========================================== -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-2 py-2">
+    <div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center">
+      
+      <!-- Home Tab -->
+      <button (click)="setActiveTab('dashboard')" [ngClass]="activeTab() === 'dashboard' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
+        <span class="text-lg">📊</span>
+        <span class="text-[11px] mt-0.5">Overview</span>
+      </button>
+
+      <!-- Rama Tab -->
+      <button (click)="setActiveTab('rama-sbi')" [ngClass]="activeTab() === 'rama-sbi' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
+        <span class="text-lg">🏛️</span>
+        <span class="text-[11px] mt-0.5">Rama (SBI)</span>
+      </button>
+
+      <!-- Gera Tab -->
+      <button (click)="setActiveTab('gera-hdfc')" [ngClass]="activeTab() === 'gera-hdfc' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
+        <span class="text-lg">🏢</span>
+        <span class="text-[11px] mt-0.5">Gera (HDFC)</span>
+      </button>
+
+      <!-- Settings Tab -->
+      <button (click)="setActiveTab('settings')" [ngClass]="activeTab() === 'settings' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="flex flex-col items-center justify-center py-1 transition">
+        <span class="text-lg">⚙️</span>
+        <span class="text-[11px] mt-0.5">Backup</span>
+      </button>
+
+    </div>
+  </nav>
+
+</div>
