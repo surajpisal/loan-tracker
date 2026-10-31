@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) {
-    return res.status(500).json({ error: 'Missing BLOB_READ_WRITE_TOKEN environment variable' });
+    return res.status(500).json({ error: 'Missing BLOB_READ_WRITE_TOKEN' });
   }
 
   try {
@@ -16,13 +16,12 @@ export default async function handler(req, res) {
     const blob = await put('loans-data.json', JSON.stringify(data, null, 2), {
       access: 'private',
       addRandomSuffix: false,
-      allowOverwrite: true, // Required to permit overwriting an existing file
       token: token
     });
 
     return res.status(200).json({ success: true, url: blob.url });
   } catch (error) {
-    console.error('Blob save error:', error);
+    console.error('Blob upload error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
