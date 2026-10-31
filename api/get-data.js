@@ -1,4 +1,4 @@
-import { list } from '@vercel/blob';
+import { get } from '@vercel/blob';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -13,25 +13,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { blobs } = await list({
-      prefix: 'loans-data.json',
+    // With @vercel/blob latest, get() works natively on private stores
+    const blobResult = await get('loans-data.json', {
+      access: 'private',
       token: token
     });
 
-    if (!blobs || blobs.length === 0) {
+    if (!blobResult || !blobResult.stream) {
       return res.status(404).json({ error: 'No data file found in Blob store yet' });
     }
 
-    // Direct fetch of the stored file (with timestamp query param to prevent CDN caching)
-    const fileResponse = await fetch(`${blobs[0].url}?t=${Date.now()}`);
-    if (!fileResponse.ok) {
-      return res.status(fileResponse.status).json({ error: 'Failed to download blob data' });
+    const chunks = [];
+    for await (const chunk of blobResult.stream) {
+      chunks.push(chunk);
     }
+    const buffer = Buffer.concat(chunks);
+    const data = JSON.parse(buffer.toString('utf-8'));
 
-    const data = await fileResponse.json();
     return res.status(200).json(data);
   } catch (error) {
     console.error('Blob fetch error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(404).json({ error: error.message });
   }
 }
