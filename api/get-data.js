@@ -1,29 +1,34 @@
-import { list } from '@vercel/blob';
+import { get } from '@vercel/blob';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Prevent browser & CDN from caching stale data
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
   try {
-    const { blobs } = await list({ prefix: 'loans-data.json' });
-    
-    if (!blobs || blobs.length === 0) {
-      return res.status(404).json({ error: 'No data file found in Blob store' });
+    const result = await get('loans-data.json', { 
+      access: 'private',
+      useCache: false 
+    });
+
+    if (!result || !result.stream) {
+      return res.status(404).json({ error: 'File not found' });
     }
 
-    // Always fetch fresh data avoiding CDN caching
-    const cacheBuster = `${blobs[0].url}?t=${Date.now()}`;
-    const response = await fetch(cacheBuster);
-    
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'Failed to download blob content' });
+    // Read the private stream and send JSON response
+    const chunks = [];
+    for await (const chunk of result.stream) {
+      chunks.push(chunk);
     }
+    const buffer = Buffer.concat(chunks);
+    const data = JSON.parse(buffer.toString('utf-8'));
 
-    const data = await response.json();
     return res.status(200).json(data);
   } catch (error) {
-    console.error('Blob fetch error:', error);
-    return res.status(500).json({ error: error.message });
+    console.error('Blob read error:', error);
+    return res.status(404).json({ error: error.message });
   }
 }
