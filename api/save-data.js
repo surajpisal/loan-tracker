@@ -18,12 +18,14 @@ export default async function handler(req, res) {
 
     const bodyString = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
 
-    // Direct HTTP PUT to Vercel's Blob store endpoint — bypasses npm SDK checks
+    // Explicitly send x-access: private to match your store configuration
     const response = await fetch('https://blob.vercel-storage.com/loans-data.json', {
       method: 'PUT',
       headers: {
         'authorization': `Bearer ${token}`,
         'x-api-version': '7',
+        'x-access': 'private',
+        'x-add-random-suffix': '0',
         'x-content-type': 'application/json',
         'content-type': 'application/json'
       },
