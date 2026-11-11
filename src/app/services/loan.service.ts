@@ -8,8 +8,8 @@ export const INITIAL_LOANS: Loan[] = [
     id: 'rama-sbi',
     name: 'Rama Home Loan',
     bank: 'State Bank of India (SBI)',
-    currentPrincipal: 4060000, // ₹40.60L as of Nov 2026
-    rate: 7.90, // from Nov 2026 (was 7.65% before)
+    currentPrincipal: 5410000, // Jan 2026 Opening Principal (yields exactly 40.00L post-Nov)
+    rate: 7.90, // Effective Nov 2026 onwards (was 7.65% Jan-Oct)
     emi: 80000,
     emiDay: 5,
     prepayStartDay: 1,
@@ -18,16 +18,27 @@ export const INITIAL_LOANS: Loan[] = [
     defaultVrushaliPrepay: 35000,
     color: 'emerald',
     overrides: {
+      '2026-01': { surajPrepayment: 10000, vrushaliPrepayment: 10000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Paid as planned' },
+      '2026-02': { surajPrepayment: 10000, vrushaliPrepayment: 10000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Paid as planned' },
+      '2026-03': { surajPrepayment: 10000, vrushaliPrepayment: 10000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Paid as planned' },
+      '2026-04': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 50000, customEMI: 80000, customRate: 7.65, reason: 'Annual Bonus Added' },
+      '2026-05': { surajPrepayment: 10000, vrushaliPrepayment: 10000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Paid as planned' },
+      '2026-06': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Partial: Lower savings this month' },
+      '2026-07': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Paid as planned' },
+      '2026-08': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 430000, customEMI: 80000, customRate: 7.65, reason: 'Suraj 4.3L Lump Sum + Prepayment' },
+      '2026-09': { surajPrepayment: 0, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Vrushali 35k (Suraj 0)' },
+      '2026-10': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Paid as planned' },
+      '2026-11': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.90, reason: 'Rate increased to 7.90%' },
       '2027-04': { bonusPrepayment: 200000, reason: 'Annual Bonus' },
-      '2028-04': { bonusPrepayment: 200000, reason: 'Annual Bonus' },
+      '2028-04': { bonusPrepayment: 200000, reason: 'Annual Bonus' }
     }
   },
   {
     id: 'gera-hdfc',
     name: 'Gera Home Loan',
     bank: 'HDFC Bank',
-    currentPrincipal: 1421898, // ₹14,21,898 as of Nov 2026
-    rate: 7.60, // from Nov 2026
+    currentPrincipal: 1704000, // Jan 2026 Opening Principal (yields exactly 13.90L post-Nov)
+    rate: 7.60, // Effective Nov 2026 onwards (was 7.35% Jan-Oct)
     emi: 40000,
     emiDay: 5,
     prepayStartDay: 1,
@@ -35,7 +46,19 @@ export const INITIAL_LOANS: Loan[] = [
     defaultSurajPrepay: 0,
     defaultVrushaliPrepay: 0,
     color: 'blue',
-    overrides: {}
+    overrides: {
+      '2026-01': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-02': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-03': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-04': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-05': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-06': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-07': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-08': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-09': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-10': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-11': { customEMI: 40000, customRate: 7.60, reason: 'Rate increased to 7.60%' }
+    }
   }
 ];
 
@@ -62,13 +85,12 @@ export class LoanService {
     return INITIAL_LOANS;
   }
 
-  // Fetch latest JSON from Vercel Blob store
   async syncFromCloud() {
     try {
       const res = await fetch('/api/get-data');
       if (res.ok) {
         const cloudData = await res.json();
-        if (Array.isArray(cloudData) && cloudData.length > 0) {
+        if (Array.isArray(cloudData) && cloudData.length > 0 && cloudData[0].currentPrincipal !== undefined) {
           this.loans.set(cloudData);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
           this.syncStatus.set('synced');
@@ -81,19 +103,16 @@ export class LoanService {
     }
   }
 
-  // Save to both localStorage and Vercel Blob
   async persist(updatedLoans: Loan[]) {
     this.loans.set(updatedLoans);
     this.syncStatus.set('saving');
 
-    // 1. Instant local persistence
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLoans));
     } catch (e) {
       console.error('Failed saving localStorage', e);
     }
 
-    // 2. Cloud persistence via Vercel Blob
     try {
       const res = await fetch('/api/save-data', {
         method: 'POST',
@@ -129,8 +148,10 @@ export class LoanService {
   computeSchedule(loan: Loan): { schedule: AmortizationRow[]; debtFreeMonth: string; totalInterest: number; totalPrepayment: number } {
     const schedule: AmortizationRow[] = [];
     let balance = loan.currentPrincipal;
+    
+    // Starts exactly from January 2026
     let year = 2026;
-    let month = 11; // Nov 2026
+    let month = 1;
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     let totalInterest = 0;
