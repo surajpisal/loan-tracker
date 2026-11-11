@@ -37,8 +37,8 @@ export const INITIAL_LOANS: Loan[] = [
     id: 'gera-hdfc',
     name: 'Gera Home Loan',
     bank: 'HDFC Bank',
-    currentPrincipal: 1704200, // Baseline starting Jan 2026 (yields exactly ₹13.90L post-Nov)
-    rate: 7.60, // Effective Nov 2026 onwards (was 7.35% Jan-Oct)
+    currentPrincipal: 1704635, // Jan 2026 baseline yielding exactly ₹13,90,414 after Nov EMI
+    rate: 7.60, // Nov 2026 onward
     emi: 40000,
     emiDay: 5,
     prepayStartDay: 1,
