@@ -21,9 +21,8 @@ export default async function handler(req, res) {
     const jsonString = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
 
     const blob = await put('loans-data.json', jsonString, {
-      access: 'private',
+      access: 'public',
       addRandomSuffix: false,
-      allowOverwrite: true,
       token: token,
       contentType: 'application/json'
     });
