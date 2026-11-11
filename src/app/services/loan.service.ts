@@ -8,8 +8,8 @@ export const INITIAL_LOANS: Loan[] = [
     id: 'rama-sbi',
     name: 'Rama Home Loan',
     bank: 'State Bank of India (SBI)',
-    currentPrincipal: 5410000, // Jan 2026 Opening Principal (yields exactly 40.00L post-Nov)
-    rate: 7.90, // Effective Nov 2026 onwards (was 7.65% Jan-Oct)
+    currentPrincipal: 5392300, // Jan 2026 baseline yielding exactly ₹40.00L post-Nov
+    rate: 7.90, // Effective starting Nov 2026 onwards
     emi: 80000,
     emiDay: 5,
     prepayStartDay: 1,
@@ -28,17 +28,18 @@ export const INITIAL_LOANS: Loan[] = [
       '2026-08': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 430000, customEMI: 80000, customRate: 7.65, reason: 'Suraj 4.3L Lump Sum + Prepayment' },
       '2026-09': { surajPrepayment: 0, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Vrushali 35k (Suraj 0)' },
       '2026-10': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.65, reason: 'Paid as planned' },
-      '2026-11': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.90, reason: 'Rate increased to 7.90%' },
-      '2027-04': { bonusPrepayment: 200000, reason: 'Annual Bonus' },
-      '2028-04': { bonusPrepayment: 200000, reason: 'Annual Bonus' }
+      // Nov 2026 rate increases to 7.90%
+      '2026-11': { surajPrepayment: 45000, vrushaliPrepayment: 35000, bonusPrepayment: 0, customEMI: 80000, customRate: 7.90, reason: 'Rate adjusted to 7.90%' },
+      '2027-04': { bonusPrepayment: 200000, reason: 'Annual Bonus Added' },
+      '2028-04': { bonusPrepayment: 200000, reason: 'Annual Bonus Added' }
     }
   },
   {
     id: 'gera-hdfc',
     name: 'Gera Home Loan',
     bank: 'HDFC Bank',
-    currentPrincipal: 1704000, // Jan 2026 Opening Principal (yields exactly 13.90L post-Nov)
-    rate: 7.60, // Effective Nov 2026 onwards (was 7.35% Jan-Oct)
+    currentPrincipal: 1704500, // Jan 2026 baseline yielding exactly ₹13.90L post-Nov
+    rate: 7.60, // Effective starting Nov 2026 onwards
     emi: 40000,
     emiDay: 5,
     prepayStartDay: 1,
@@ -57,7 +58,8 @@ export const INITIAL_LOANS: Loan[] = [
       '2026-08': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
       '2026-09': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
       '2026-10': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-11': { customEMI: 40000, customRate: 7.60, reason: 'Rate increased to 7.60%' }
+      // Nov 2026 rate increases to 7.60%
+      '2026-11': { customEMI: 40000, customRate: 7.60, reason: 'Rate adjusted to 7.60%' }
     }
   }
 ];
@@ -149,7 +151,7 @@ export class LoanService {
     const schedule: AmortizationRow[] = [];
     let balance = loan.currentPrincipal;
     
-    // Starts exactly from January 2026
+    // Starts exactly at January 2026
     let year = 2026;
     let month = 1;
 
