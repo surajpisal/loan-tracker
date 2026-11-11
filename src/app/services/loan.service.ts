@@ -146,79 +146,93 @@ export class LoanService {
   }
 
   computeSchedule(loan: Loan): { schedule: AmortizationRow[]; debtFreeMonth: string; totalInterest: number; totalPrepayment: number } {
-    const schedule: AmortizationRow[] = [];
-    let balance = loan.currentPrincipal;
-    
-    // Start calculations from January 2026
-    let year = 2026;
-    let month = 1;
+  const schedule: AmortizationRow[] = [];
+  let balance = loan.currentPrincipal;
+  
+  // Starting timeline: January 2026
+  let year = 2026;
+  let month = 1;
 
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    let totalInterest = 0;
-    let totalPrepayment = 0;
-    let debtFreeMonth = 'Never';
+  // Track active rate and EMI so adjustments carry forward into all future months
+  let activeRate = loan.rate;
+  let activeEMI = loan.emi;
 
-    for (let i = 0; i < 360; i++) {
-      if (balance <= 0) break;
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  let totalInterest = 0;
+  let totalPrepayment = 0;
+  let debtFreeMonth = 'Never';
 
-      const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-      const override = loan.overrides?.[monthKey] || {};
+  for (let i = 0; i < 360; i++) {
+    if (balance <= 0) break;
 
-      const currentRate = override.customRate ?? loan.rate;
-      const currentEMI = override.customEMI ?? loan.emi;
-      const suraj = override.surajPrepayment !== undefined ? override.surajPrepayment : loan.defaultSurajPrepay;
-      const vrushali = override.vrushaliPrepayment !== undefined ? override.vrushaliPrepayment : loan.defaultVrushaliPrepay;
-      const bonus = override.bonusPrepayment || 0;
-      const prepay = suraj + vrushali + bonus;
-      const reason = override.reason || '';
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+    const override = loan.overrides?.[monthKey] || {};
 
-      const monthlyRate = currentRate / 12 / 100;
-      const interestForMonth = Math.round(balance * monthlyRate);
-      totalInterest += interestForMonth;
-
-      let emiPrincipal = currentEMI - interestForMonth;
-      if (emiPrincipal < 0) emiPrincipal = 0;
-
-      let endBal = balance + interestForMonth - currentEMI - prepay;
-
-      if (endBal < 0) {
-        endBal = 0;
-        debtFreeMonth = `${monthNames[month - 1]} ${year}`;
-      }
-
-      totalPrepayment += prepay;
-
-      schedule.push({
-        monthKey,
-        displayDate: `${monthNames[month - 1]} ${year}`,
-        year,
-        monthName: monthNames[month - 1],
-        startBalance: balance,
-        rate: currentRate,
-        emi: currentEMI,
-        surajPrepay: suraj,
-        vrushaliPrepay: vrushali,
-        bonusPrepay: bonus,
-        totalPrepayment: prepay,
-        interestCharged: interestForMonth,
-        principalPaid: balance - endBal,
-        endBalance: endBal,
-        reason
-      });
-
-      balance = endBal;
-      if (balance <= 0) {
-        debtFreeMonth = `${monthNames[month - 1]} ${year}`;
-        break;
-      }
-
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
+    // If an override specifies a new rate or EMI, update activeRate/activeEMI to carry forward
+    if (override.customRate !== undefined && override.customRate !== null && !isNaN(override.customRate)) {
+      activeRate = override.customRate;
+    }
+    if (override.customEMI !== undefined && override.customEMI !== null && !isNaN(override.customEMI) && override.customEMI > 0) {
+      activeEMI = override.customEMI;
     }
 
-    return { schedule, debtFreeMonth, totalInterest, totalPrepayment };
+    const currentRate = activeRate;
+    const currentEMI = activeEMI;
+
+    // Prepayments are month-specific (they don't automatically carry forward unless default is set)
+    const suraj = override.surajPrepayment !== undefined ? override.surajPrepayment : loan.defaultSurajPrepay;
+    const vrushali = override.vrushaliPrepayment !== undefined ? override.vrushaliPrepayment : loan.defaultVrushaliPrepay;
+    const bonus = override.bonusPrepayment || 0;
+    const prepay = suraj + vrushali + bonus;
+    const reason = override.reason || '';
+
+    const monthlyRate = currentRate / 12 / 100;
+    const interestForMonth = Math.round(balance * monthlyRate);
+    totalInterest += interestForMonth;
+
+    let emiPrincipal = currentEMI - interestForMonth;
+    if (emiPrincipal < 0) emiPrincipal = 0;
+
+    let endBal = balance + interestForMonth - currentEMI - prepay;
+
+    if (endBal < 0) {
+      endBal = 0;
+      debtFreeMonth = `${monthNames[month - 1]} ${year}`;
+    }
+
+    totalPrepayment += prepay;
+
+    schedule.push({
+      monthKey,
+      displayDate: `${monthNames[month - 1]} ${year}`,
+      year,
+      monthName: monthNames[month - 1],
+      startBalance: balance,
+      rate: currentRate,
+      emi: currentEMI,
+      surajPrepay: suraj,
+      vrushaliPrepay: vrushali,
+      bonusPrepay: bonus,
+      totalPrepayment: prepay,
+      interestCharged: interestForMonth,
+      principalPaid: balance - endBal,
+      endBalance: endBal,
+      reason
+    });
+
+    balance = endBal;
+    if (balance <= 0) {
+      debtFreeMonth = `${monthNames[month - 1]} ${year}`;
+      break;
+    }
+
+    month++;
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
   }
+
+  return { schedule, debtFreeMonth, totalInterest, totalPrepayment };
+}
 }
