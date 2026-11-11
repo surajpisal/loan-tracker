@@ -16,6 +16,9 @@ type ActiveTab = 'dashboard' | 'rama-sbi' | 'gera-hdfc' | 'settings';
 export class AppComponent {
   public loanService = inject(LoanService);
 
+  // Current active operational month boundary
+  readonly CURRENT_MONTH_KEY = '2026-11';
+
   activeTab = signal<ActiveTab>('dashboard');
   loans = this.loanService.loans;
 
@@ -32,48 +35,47 @@ export class AppComponent {
   reasons = [
     'Paid as planned',
     'Annual Bonus Added',
-    'Suraj 4.3L Lump Sum + Prepayment',
-    'Vrushali 35k (Suraj 0)',
+    'Suraj Lump Sum + Prepayment',
+    'Partial: Lower savings this month',
     'Missed: Advance Tax',
     'Missed: Medical Emergency',
-    'Missed: Vacation/Festival Outflow',
-    'Partial: Lower savings this month',
     'Rate adjusted'
   ];
 
-  // Base Loan references
+  // Base Loan definitions
   ramaLoan = computed(() => this.loans().find(l => l.id === 'rama-sbi')!);
   geraLoan = computed(() => this.loans().find(l => l.id === 'gera-hdfc')!);
 
-  // Real-time calculated schedules (starts Jan 2026)
+  // Full amortization schedule computed dynamically
   ramaData = computed(() => this.loanService.computeSchedule(this.ramaLoan()));
   geraData = computed(() => this.loanService.computeSchedule(this.geraLoan()));
 
-  // Active November 2026 row for Rama
-  ramaNovRow = computed(() => {
-    return this.ramaData().schedule.find(r => r.monthKey === '2026-11') || this.ramaData().schedule[0];
+  // Active Current Month (2026-11) rows directly extracted from schedule
+  ramaCurrentRow = computed(() => {
+    return this.ramaData().schedule.find(r => r.monthKey === this.CURRENT_MONTH_KEY) 
+      || this.ramaData().schedule[this.ramaData().schedule.length - 1];
   });
 
-  // Active November 2026 row for Gera
-  geraNovRow = computed(() => {
-    return this.geraData().schedule.find(r => r.monthKey === '2026-11') || this.geraData().schedule[0];
+  geraCurrentRow = computed(() => {
+    return this.geraData().schedule.find(r => r.monthKey === this.CURRENT_MONTH_KEY) 
+      || this.geraData().schedule[this.geraData().schedule.length - 1];
   });
 
-  // Dynamic Nov 2026 Balances (₹40.00L & ₹13.90L)
-  ramaCurrentBalance = computed(() => this.ramaNovRow()?.endBalance ?? 0);
-  geraCurrentBalance = computed(() => this.geraNovRow()?.endBalance ?? 0);
+  // Dynamic Dashboard Balances reflecting Current Month (Nov 2026)
+  ramaCurrentBalance = computed(() => this.ramaCurrentRow()?.endBalance ?? 0);
+  geraCurrentBalance = computed(() => this.geraCurrentRow()?.endBalance ?? 0);
 
-  // Dynamic Rate & EMI for Nov 2026
-  ramaCurrentRate = computed(() => this.ramaNovRow()?.rate ?? this.ramaLoan()?.rate);
-  geraCurrentRate = computed(() => this.geraNovRow()?.rate ?? this.geraLoan()?.rate);
-  ramaCurrentEMI = computed(() => this.ramaNovRow()?.emi ?? this.ramaLoan()?.emi);
-  geraCurrentEMI = computed(() => this.geraNovRow()?.emi ?? this.geraLoan()?.emi);
+  // Dynamic Rates & EMIs for Current Month
+  ramaCurrentRate = computed(() => this.ramaCurrentRow()?.rate ?? this.ramaLoan()?.rate);
+  geraCurrentRate = computed(() => this.geraCurrentRow()?.rate ?? this.geraLoan()?.rate);
+  ramaCurrentEMI = computed(() => this.ramaCurrentRow()?.emi ?? this.ramaLoan()?.emi);
+  geraCurrentEMI = computed(() => this.geraCurrentRow()?.emi ?? this.geraLoan()?.emi);
 
-  // Dynamic Prepayments for Nov 2026
-  ramaCurrentPrepay = computed(() => this.ramaNovRow()?.totalPrepayment ?? (this.ramaLoan()?.defaultSurajPrepay + this.ramaLoan()?.defaultVrushaliPrepay));
-  geraCurrentPrepay = computed(() => this.geraNovRow()?.totalPrepayment ?? (this.geraLoan()?.defaultSurajPrepay + this.geraLoan()?.defaultVrushaliPrepay));
+  // Dynamic Current Prepayments
+  ramaCurrentPrepay = computed(() => this.ramaCurrentRow()?.totalPrepayment ?? 0);
+  geraCurrentPrepay = computed(() => this.geraCurrentRow()?.totalPrepayment ?? 0);
 
-  // Executive Dashboard Metrics
+  // Executive Top Summary Metrics
   totalOutstanding = computed(() => this.ramaCurrentBalance() + this.geraCurrentBalance());
   totalEMI = computed(() => this.ramaCurrentEMI() + this.geraCurrentEMI());
   totalPlannedPrepayment = computed(() => this.ramaCurrentPrepay() + this.geraCurrentPrepay());
@@ -89,7 +91,17 @@ export class AppComponent {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  isEditableMonth(monthKey: string): boolean {
+    // Only current month ('2026-11') and later months are allowed to be edited
+    return monthKey >= this.CURRENT_MONTH_KEY;
+  }
+
   openEditModal(loanId: string, row: AmortizationRow) {
+    if (!this.isEditableMonth(row.monthKey)) {
+      alert(`Editing is locked for past historical months (${row.displayDate}). You can only edit from November 2026 onwards.`);
+      return;
+    }
+
     this.editingRow.set({ loanId, row });
     this.editForm = {
       surajPrepay: row.surajPrepay,
@@ -109,6 +121,13 @@ export class AppComponent {
     const current = this.editingRow();
     if (!current) return;
 
+    if (!this.isEditableMonth(current.row.monthKey)) {
+      this.closeEditModal();
+      return;
+    }
+
+    // Persist override to the selected month key.
+    // LoanService will recalculate that month and every following month automatically.
     this.loanService.updateLoanOverride(current.loanId, current.row.monthKey, {
       surajPrepayment: Number(this.editForm.surajPrepay),
       vrushaliPrepayment: Number(this.editForm.vrushaliPrepay),
