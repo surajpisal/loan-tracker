@@ -149,11 +149,10 @@ export class LoanService {
   const schedule: AmortizationRow[] = [];
   let balance = loan.currentPrincipal;
   
-  // Starting timeline: January 2026
   let year = 2026;
   let month = 1;
 
-  // Track active rate and EMI so adjustments carry forward into all future months
+  // 1. Initial rates & EMIs that will cascade forward across months
   let activeRate = loan.rate;
   let activeEMI = loan.emi;
 
@@ -168,18 +167,18 @@ export class LoanService {
     const monthKey = `${year}-${String(month).padStart(2, '0')}`;
     const override = loan.overrides?.[monthKey] || {};
 
-    // If an override specifies a new rate or EMI, update activeRate/activeEMI to carry forward
-    if (override.customRate !== undefined && override.customRate !== null && !isNaN(override.customRate)) {
-      activeRate = override.customRate;
+    // 2. If a month introduces a customRate, it overrides activeRate permanently forward
+    if (override.customRate !== undefined && override.customRate !== null && !isNaN(override.customRate) && override.customRate > 0) {
+      activeRate = Number(override.customRate);
     }
+
     if (override.customEMI !== undefined && override.customEMI !== null && !isNaN(override.customEMI) && override.customEMI > 0) {
-      activeEMI = override.customEMI;
+      activeEMI = Number(override.customEMI);
     }
 
     const currentRate = activeRate;
     const currentEMI = activeEMI;
 
-    // Prepayments are month-specific (they don't automatically carry forward unless default is set)
     const suraj = override.surajPrepayment !== undefined ? override.surajPrepayment : loan.defaultSurajPrepay;
     const vrushali = override.vrushaliPrepayment !== undefined ? override.vrushaliPrepayment : loan.defaultVrushaliPrepay;
     const bonus = override.bonusPrepayment || 0;
@@ -202,13 +201,14 @@ export class LoanService {
 
     totalPrepayment += prepay;
 
+    // 3. Make sure 'rate: currentRate' (the active carried-forward rate) is assigned to the row
     schedule.push({
       monthKey,
       displayDate: `${monthNames[month - 1]} ${year}`,
       year,
       monthName: monthNames[month - 1],
       startBalance: balance,
-      rate: currentRate,
+      rate: currentRate, // ✅ Displays 7.8% on this row and all subsequent rows
       emi: currentEMI,
       surajPrepay: suraj,
       vrushaliPrepay: vrushali,
