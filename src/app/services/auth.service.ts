@@ -11,8 +11,8 @@ const AUTH_STORAGE_KEY = 'loan_tracker_user_session';
 
 // Allowed logins whitelist
 export const ALLOWED_EMAILS: string[] = [
-  'your-email@gmail.com',     // <-- Replace with your primary Google email
-  'vrushali-email@gmail.com'  // <-- Replace with Vrushali's Google email
+  'pisalsuraj99@gmail.com',     // <-- Replace with your primary Google email
+  'vrushali9499@gmail.com'  // <-- Replace with Vrushali's Google email
 ];
 
 declare const google: any;
@@ -22,7 +22,7 @@ declare const google: any;
 })
 export class AuthService {
   // Replace with your Google OAuth Web Client ID from Google Cloud Console
-  readonly GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+  readonly GOOGLE_CLIENT_ID = '431302914481-3g7o30fvehvv1v47c3igmorhqasmjpbn.apps.googleusercontent.com';
 
   currentUser = signal<UserProfile | null>(this.getStoredUser());
   authError = signal<string | null>(null);
