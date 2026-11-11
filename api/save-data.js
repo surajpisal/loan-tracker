@@ -20,9 +20,8 @@ export default async function handler(req, res) {
 
     const jsonString = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
 
-    // Matches the official Vercel Private Quickstart snippet
     const blob = await put('loans-data.json', jsonString, {
-      access: 'private',
+      access: 'public',
       addRandomSuffix: false,
       token: token,
       contentType: 'application/json'
@@ -30,7 +29,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, url: blob.url });
   } catch (error) {
-    console.error('Save error:', error);
+    console.error('Blob upload error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
