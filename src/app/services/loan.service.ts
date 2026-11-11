@@ -37,8 +37,8 @@ export const INITIAL_LOANS: Loan[] = [
     id: 'gera-hdfc',
     name: 'Gera Home Loan',
     bank: 'HDFC Bank',
-    currentPrincipal: 1704635, // Jan 2026 baseline yielding exactly ₹13,90,414 after Nov EMI
-    rate: 7.60, // Nov 2026 onward
+    currentPrincipal: 1721833, // Jan 2026 baseline yielding exactly ₹13,90,414 after Nov EMI
+    rate: 7.60,
     emi: 40000,
     emiDay: 5,
     prepayStartDay: 1,
@@ -47,17 +47,17 @@ export const INITIAL_LOANS: Loan[] = [
     defaultVrushaliPrepay: 0,
     color: 'blue',
     overrides: {
-      '2026-01': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-02': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-03': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-04': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-05': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-06': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-07': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-08': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-09': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-10': { customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
-      '2026-11': { customEMI: 40000, customRate: 7.60, reason: 'Rate adjusted to 7.60%' }
+      '2026-01': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-02': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-03': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-04': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-05': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-06': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-07': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-08': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-09': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-10': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.35, reason: 'Fixed EMI' },
+      '2026-11': { surajPrepayment: 0, vrushaliPrepayment: 0, bonusPrepayment: 0, customEMI: 40000, customRate: 7.60, reason: 'Rate adjusted to 7.60%' }
     }
   }
 ];
