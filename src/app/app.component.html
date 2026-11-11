@@ -12,7 +12,6 @@
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <!-- Sync Status Badge -->
       <span *ngIf="loanService.syncStatus() === 'synced'" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
         ● Cloud Synced
       </span>
@@ -82,20 +81,20 @@
           <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-800/80 text-xs">
             <div>
               <span class="text-slate-400 block">Balance (Nov 2026)</span>
-              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ formatINR(ramaCurrentBalance()) }</span>
+              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ formatINR(ramaCurrentBalance()) }}</span>
             </div>
             <div>
               <span class="text-slate-400 block">Rate & EMI</span>
-              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ ramaLoan().rate }}% / {{ formatINR(ramaLoan().emi) }}</span>
+              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ ramaCurrentRate() }}% / {{ formatINR(ramaCurrentEMI()) }}</span>
             </div>
             <div>
               <span class="text-slate-400 block">Monthly Prepay</span>
-              <span class="font-bold text-emerald-400 font-mono text-sm mt-0.5 block">{{ formatINR(ramaLoan().defaultSurajPrepay + ramaLoan().defaultVrushaliPrepay) }}</span>
+              <span class="font-bold text-emerald-400 font-mono text-sm mt-0.5 block">{{ formatINR(ramaCurrentPrepay()) }}</span>
             </div>
           </div>
 
           <div class="mt-4 flex items-center justify-between text-xs text-emerald-400 pt-2 font-medium">
-            <span>Suraj (45k) + Vrushali (35k) between 1st–3rd</span>
+            <span>Suraj ({{ formatINR(ramaNovRow().surajPrepay) }}) + Vrushali ({{ formatINR(ramaNovRow().vrushaliPrepay) }}) between 1st–3rd</span>
             <span class="group-hover:translate-x-1 transition-transform">Open Full Schedule →</span>
           </div>
         </div>
@@ -122,11 +121,11 @@
             </div>
             <div>
               <span class="text-slate-400 block">Rate & EMI</span>
-              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ geraLoan().rate }}% / {{ formatINR(geraLoan().emi) }}</span>
+              <span class="font-bold text-white font-mono text-sm mt-0.5 block">{{ geraCurrentRate() }}% / {{ formatINR(geraCurrentEMI()) }}</span>
             </div>
             <div>
               <span class="text-slate-400 block">Monthly Prepay</span>
-              <span class="font-bold text-blue-400 font-mono text-sm mt-0.5 block">{{ formatINR(geraLoan().defaultSurajPrepay + geraLoan().defaultVrushaliPrepay) }}</span>
+              <span class="font-bold text-blue-400 font-mono text-sm mt-0.5 block">{{ formatINR(geraCurrentPrepay()) }}</span>
             </div>
           </div>
 
@@ -156,7 +155,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-lg font-bold text-white">Rama Home Loan (SBI)</h2>
-            <p class="text-xs text-slate-400">Base Principal: ₹40.60L • Rate: 7.90% • EMI: ₹80,000</p>
+            <p class="text-xs text-slate-400">Current Balance: {{ formatINR(ramaCurrentBalance()) }} • Rate: {{ ramaCurrentRate() }}% • EMI: {{ formatINR(ramaCurrentEMI()) }}</p>
           </div>
           <button (click)="setActiveTab('dashboard')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
             ← Dashboard
@@ -174,7 +173,7 @@
           </div>
           <div>
             <span class="text-slate-400">Suraj + Vrushali</span>
-            <p class="text-sm font-bold text-white mt-0.5">₹45k + ₹35k/mo</p>
+            <p class="text-sm font-bold text-white mt-0.5">{{ formatINR(ramaLoan().defaultSurajPrepay) }} + {{ formatINR(ramaLoan().defaultVrushaliPrepay) }}/mo</p>
           </div>
           <div>
             <span class="text-slate-400">Prepayment Window</span>
@@ -243,7 +242,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-lg font-bold text-white">Gera Home Loan (HDFC)</h2>
-            <p class="text-xs text-slate-400">Base Principal: ₹14,21,898 • Rate: 7.60% • EMI: ₹40,000</p>
+            <p class="text-xs text-slate-400">Current Balance: {{ formatINR(geraCurrentBalance()) }} • Rate: {{ geraCurrentRate() }}% • EMI: {{ formatINR(geraCurrentEMI()) }}</p>
           </div>
           <button (click)="setActiveTab('dashboard')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700">
             ← Dashboard
@@ -261,7 +260,7 @@
           </div>
           <div>
             <span class="text-slate-400">Current Prepayment</span>
-            <p class="text-sm font-bold text-white mt-0.5">₹0/mo (Adjustable)</p>
+            <p class="text-sm font-bold text-white mt-0.5">{{ formatINR(geraLoan().defaultSurajPrepay + geraLoan().defaultVrushaliPrepay) }}/mo</p>
           </div>
           <div>
             <span class="text-slate-400">EMI Auto-Debit</span>
@@ -356,13 +355,13 @@
         <div class="space-y-3 text-xs">
           <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-800">
             <span class="font-bold text-emerald-400">Rama Home Loan (SBI)</span>
-            <p class="text-slate-400 mt-1">Starting Balance: ₹40,60,000 | Current Rate: 7.90% | EMI: ₹80,000</p>
-            <p class="text-slate-400">Prepayment Split: Suraj (₹45,000) + Vrushali (₹35,000) = ₹80,000/mo (Due 1st-3rd)</p>
+            <p class="text-slate-400 mt-1">Nov 2026 Balance: {{ formatINR(ramaCurrentBalance()) }} | Current Rate: {{ ramaCurrentRate() }}% | EMI: {{ formatINR(ramaCurrentEMI()) }}</p>
+            <p class="text-slate-400">Prepayment Split: Suraj ({{ formatINR(ramaLoan().defaultSurajPrepay) }}) + Vrushali ({{ formatINR(ramaLoan().defaultVrushaliPrepay) }}) = {{ formatINR(ramaLoan().defaultSurajPrepay + ramaLoan().defaultVrushaliPrepay) }}/mo (Due 1st-3rd)</p>
           </div>
 
           <div class="p-3 bg-slate-800/60 rounded-xl border border-slate-800">
             <span class="font-bold text-blue-400">Gera Home Loan (HDFC)</span>
-            <p class="text-slate-400 mt-1">Starting Balance: ₹14,21,898 | Current Rate: 7.60% | EMI: ₹40,000</p>
+            <p class="text-slate-400 mt-1">Nov 2026 Balance: {{ formatINR(geraCurrentBalance()) }} | Current Rate: {{ geraCurrentRate() }}% | EMI: {{ formatINR(geraCurrentEMI()) }}</p>
             <p class="text-slate-400">Prepayment: Configurable per month in schedule</p>
           </div>
         </div>
@@ -379,7 +378,7 @@
   </main>
 
   <!-- ========================================== -->
-  <!-- EDIT MONTHLY PREPAYMENT BOTTOM SHEET MODAL -->
+  <!-- EDIT MONTHLY PREPAYMENT MODAL -->
   <!-- ========================================== -->
   <div *ngIf="editingRow()" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
     <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-lg p-5 max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
