@@ -4,15 +4,15 @@ export interface UserProfile {
   email: string;
   name: string;
   picture: string;
-  sub: string; // Google User ID
+  sub: string;
 }
 
 const AUTH_STORAGE_KEY = 'loan_tracker_user_session';
 
-// 1. ADD ONLY ALLOWED LOGINS HERE
+// Allowed logins whitelist
 export const ALLOWED_EMAILS: string[] = [
-  'your-email@gmail.com',         // Replace with your email
-  'vrushali-email@gmail.com'       // Replace with your wife's email
+  'your-email@gmail.com',     // <-- Replace with your primary Google email
+  'vrushali-email@gmail.com'  // <-- Replace with Vrushali's Google email
 ];
 
 declare const google: any;
@@ -21,7 +21,7 @@ declare const google: any;
   providedIn: 'root'
 })
 export class AuthService {
-  // Replace with your actual Google Client ID from Step 1
+  // Replace with your Google OAuth Web Client ID from Google Cloud Console
   readonly GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
 
   currentUser = signal<UserProfile | null>(this.getStoredUser());
@@ -43,7 +43,6 @@ export class AuthService {
   initGoogleAuth() {
     if (typeof window === 'undefined') return;
 
-    // Retry until script is mounted
     const interval = setInterval(() => {
       if (typeof google !== 'undefined' && google.accounts?.id) {
         clearInterval(interval);
@@ -79,7 +78,7 @@ export class AuthService {
       const payload = this.decodeJwt(response.credential);
       const email = (payload.email || '').toLowerCase().trim();
 
-      // 2. ENFORCE WHITELIST CHECK
+      // Check against allowed email list
       const isAllowed = ALLOWED_EMAILS.some(e => e.toLowerCase().trim() === email);
 
       if (!isAllowed) {
@@ -88,7 +87,6 @@ export class AuthService {
         return;
       }
 
-      // Valid authorized user
       const user: UserProfile = {
         email,
         name: payload.name || email,
@@ -99,7 +97,6 @@ export class AuthService {
       this.currentUser.set(user);
       this.authError.set(null);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-      // Store token for backend requests if needed
       localStorage.setItem('google_id_token', response.credential);
 
     } catch (err) {
