@@ -15,9 +15,7 @@ export default async function handler(req, res) {
     if (typeof payload === 'string') {
       try {
         payload = JSON.parse(payload);
-      } catch (e) {
-        // Already a string
-      }
+      } catch (e) {}
     }
 
     const jsonString = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : payload;
@@ -25,13 +23,14 @@ export default async function handler(req, res) {
     const blob = await put('loans-data.json', jsonString, {
       access: 'private',
       addRandomSuffix: false,
+      allowOverwrite: true,
       token: token,
       contentType: 'application/json'
     });
 
     return res.status(200).json({ success: true, url: blob.url });
   } catch (error) {
-    console.error('Blob upload error:', error);
+    console.error('Blob save error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
