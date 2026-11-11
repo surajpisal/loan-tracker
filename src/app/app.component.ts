@@ -95,12 +95,18 @@ export class AppComponent implements AfterViewInit {
   }
 
   tryRenderGoogleButton() {
-    if (!this.authService.isLoggedIn() && this.googleBtnContainer?.nativeElement) {
-      this.authService.renderSignInButton(this.googleBtnContainer.nativeElement);
-    } else {
-      setTimeout(() => this.tryRenderGoogleButton(), 250);
-    }
+  if (this.authService.isLoggedIn()) return;
+
+  const btnEl = this.googleBtnContainer?.nativeElement;
+  const isGoogleLoaded = typeof window !== 'undefined' && (window as any).google?.accounts?.id;
+
+  if (btnEl && isGoogleLoaded) {
+    this.authService.renderSignInButton(btnEl);
+  } else {
+    // Retry every 200ms until both the DOM element and Google SDK script are ready
+    setTimeout(() => this.tryRenderGoogleButton(), 200);
   }
+}
 
   setActiveTab(tab: ActiveTab) {
     this.activeTab.set(tab);
