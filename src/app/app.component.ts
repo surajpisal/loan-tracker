@@ -35,7 +35,9 @@ export class AppComponent {
     'Missed: Advance Tax',
     'Missed: Medical Emergency',
     'Missed: Vacation/Festival Outflow',
-    'Partial: Lower savings this month'
+    'Partial: Lower savings this month',
+    'Rate reduced to 7.90%',
+    'Rate adjusted'
   ];
 
   ramaLoan = computed(() => this.loans().find(l => l.id === 'rama-sbi')!);
@@ -44,8 +46,20 @@ export class AppComponent {
   geraLoan = computed(() => this.loans().find(l => l.id === 'gera-hdfc')!);
   geraData = computed(() => this.loanService.computeSchedule(this.geraLoan()));
 
+  // Active current month balance (Nov 2026) derived directly from the computed schedule
+  ramaCurrentBalance = computed(() => {
+    const novRow = this.ramaData().schedule.find(r => r.monthKey === '2026-11');
+    return novRow ? novRow.endBalance : (this.ramaData().schedule[0]?.endBalance || 0);
+  });
+
+  geraCurrentBalance = computed(() => {
+    const novRow = this.geraData().schedule.find(r => r.monthKey === '2026-11');
+    return novRow ? novRow.endBalance : (this.geraData().schedule[0]?.endBalance || 0);
+  });
+
+  // Total Outstanding on the dashboard reflects the live post-Nov schedule balances
   totalOutstanding = computed(() => {
-    return this.ramaLoan().currentPrincipal + this.geraLoan().currentPrincipal;
+    return this.ramaCurrentBalance() + this.geraCurrentBalance();
   });
 
   totalEMI = computed(() => {
@@ -53,8 +67,10 @@ export class AppComponent {
   });
 
   totalPlannedPrepayment = computed(() => {
-    const ramaP = this.ramaLoan().defaultSurajPrepay + this.ramaLoan().defaultVrushaliPrepay;
-    const geraP = this.geraLoan().defaultSurajPrepay + this.geraLoan().defaultVrushaliPrepay;
+    const novRama = this.ramaData().schedule.find(r => r.monthKey === '2026-11');
+    const novGera = this.geraData().schedule.find(r => r.monthKey === '2026-11');
+    const ramaP = novRama ? novRama.totalPrepayment : (this.ramaLoan().defaultSurajPrepay + this.ramaLoan().defaultVrushaliPrepay);
+    const geraP = novGera ? novGera.totalPrepayment : (this.geraLoan().defaultSurajPrepay + this.geraLoan().defaultVrushaliPrepay);
     return ramaP + geraP;
   });
 
