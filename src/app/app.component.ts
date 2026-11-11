@@ -1,7 +1,8 @@
-import { Component, computed, signal, inject } from '@angular/core';
+import { Component, computed, signal, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LoanService } from './services/loan.service';
+import { AuthService } from './services/auth.service';
 import { Loan, AmortizationRow } from './models/loan.model';
 
 type ActiveTab = 'dashboard' | 'rama-sbi' | 'gera-hdfc' | 'settings';
@@ -13,8 +14,11 @@ type ActiveTab = 'dashboard' | 'rama-sbi' | 'gera-hdfc' | 'settings';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit {
   public loanService = inject(LoanService);
+  public authService = inject(AuthService);
+
+  @ViewChild('googleBtnContainer') googleBtnContainer?: ElementRef<HTMLDivElement>;
 
   // Current active operational month boundary
   readonly CURRENT_MONTH_KEY = '2026-11';
@@ -86,13 +90,24 @@ export class AppComponent {
     return ramaMonths >= geraMonths ? this.ramaData().debtFreeMonth : this.geraData().debtFreeMonth;
   });
 
+  ngAfterViewInit() {
+    this.tryRenderGoogleButton();
+  }
+
+  tryRenderGoogleButton() {
+    if (!this.authService.isLoggedIn() && this.googleBtnContainer?.nativeElement) {
+      this.authService.renderSignInButton(this.googleBtnContainer.nativeElement);
+    } else {
+      setTimeout(() => this.tryRenderGoogleButton(), 250);
+    }
+  }
+
   setActiveTab(tab: ActiveTab) {
     this.activeTab.set(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   isEditableMonth(monthKey: string): boolean {
-    // Only current month ('2026-11') and later months are allowed to be edited
     return monthKey >= this.CURRENT_MONTH_KEY;
   }
 
@@ -126,8 +141,6 @@ export class AppComponent {
       return;
     }
 
-    // Persist override to the selected month key.
-    // LoanService will recalculate that month and every following month automatically.
     this.loanService.updateLoanOverride(current.loanId, current.row.monthKey, {
       surajPrepayment: Number(this.editForm.surajPrepay),
       vrushaliPrepayment: Number(this.editForm.vrushaliPrepay),
