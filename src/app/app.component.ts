@@ -45,65 +45,44 @@ export class AppComponent {
   ramaLoan = computed(() => this.loans().find(l => l.id === 'rama-sbi')!);
   geraLoan = computed(() => this.loans().find(l => l.id === 'gera-hdfc')!);
 
-  // Dynamic schedules computed from Jan 2026
+  // Real-time calculated schedules (starts Jan 2026)
   ramaData = computed(() => this.loanService.computeSchedule(this.ramaLoan()));
   geraData = computed(() => this.loanService.computeSchedule(this.geraLoan()));
 
-  // Active November 2026 Balances derived directly from the schedule rows
-  ramaNovBalance = computed(() => {
-    const novRow = this.ramaData().schedule.find(r => r.monthKey === '2026-11');
-    return novRow ? novRow.endBalance : (this.ramaData().schedule[0]?.endBalance || 0);
+  // Active November 2026 row for Rama
+  ramaNovRow = computed(() => {
+    return this.ramaData().schedule.find(r => r.monthKey === '2026-11') || this.ramaData().schedule[0];
   });
 
-  geraNovBalance = computed(() => {
-    const novRow = this.geraData().schedule.find(r => r.monthKey === '2026-11');
-    return novRow ? novRow.endBalance : (this.geraData().schedule[0]?.endBalance || 0);
+  // Active November 2026 row for Gera
+  geraNovRow = computed(() => {
+    return this.geraData().schedule.find(r => r.monthKey === '2026-11') || this.geraData().schedule[0];
   });
 
-  // Top Dashboard Card: Total Outstanding = Sum of active Nov 2026 balances
-  totalOutstanding = computed(() => {
-    return this.ramaNovBalance() + this.geraNovBalance();
-  });
+  // Dynamic Nov 2026 Balances (₹40.00L & ₹13.90L)
+  ramaCurrentBalance = computed(() => this.ramaNovRow()?.endBalance ?? 0);
+  geraCurrentBalance = computed(() => this.geraNovRow()?.endBalance ?? 0);
 
-  // Top Dashboard Card: Monthly Total EMI
-  totalEMI = computed(() => {
-    const ramaEmi = this.ramaLoan()?.emi || 80000;
-    const geraEmi = this.geraLoan()?.emi || 40000;
-    return ramaEmi + geraEmi;
-  });
+  // Dynamic Rate & EMI for Nov 2026
+  ramaCurrentRate = computed(() => this.ramaNovRow()?.rate ?? this.ramaLoan()?.rate);
+  geraCurrentRate = computed(() => this.geraNovRow()?.rate ?? this.geraLoan()?.rate);
+  ramaCurrentEMI = computed(() => this.ramaNovRow()?.emi ?? this.ramaLoan()?.emi);
+  geraCurrentEMI = computed(() => this.geraNovRow()?.emi ?? this.geraLoan()?.emi);
 
-  // Top Dashboard Card: Monthly Total Prepay (Nov 2026 actual/planned)
-  totalPlannedPrepayment = computed(() => {
-    const rRow = this.ramaData().schedule.find(r => r.monthKey === '2026-11');
-    const gRow = this.geraData().schedule.find(r => r.monthKey === '2026-11');
-    const ramaP = rRow ? rRow.totalPrepayment : (this.ramaLoan().defaultSurajPrepay + this.ramaLoan().defaultVrushaliPrepay);
-    const geraP = gRow ? gRow.totalPrepayment : (this.geraLoan().defaultSurajPrepay + this.geraLoan().defaultVrushaliPrepay);
-    return ramaP + geraP;
-  });
+  // Dynamic Prepayments for Nov 2026
+  ramaCurrentPrepay = computed(() => this.ramaNovRow()?.totalPrepayment ?? (this.ramaLoan()?.defaultSurajPrepay + this.ramaLoan()?.defaultVrushaliPrepay));
+  geraCurrentPrepay = computed(() => this.geraNovRow()?.totalPrepayment ?? (this.geraLoan()?.defaultSurajPrepay + this.geraLoan()?.defaultVrushaliPrepay));
 
-  // Top Dashboard Card: Debt-free date
+  // Executive Dashboard Metrics
+  totalOutstanding = computed(() => this.ramaCurrentBalance() + this.geraCurrentBalance());
+  totalEMI = computed(() => this.ramaCurrentEMI() + this.geraCurrentEMI());
+  totalPlannedPrepayment = computed(() => this.ramaCurrentPrepay() + this.geraCurrentPrepay());
+
   portfolioDebtFree = computed(() => {
     const ramaMonths = this.ramaData().schedule.length;
     const geraMonths = this.geraData().schedule.length;
     return ramaMonths >= geraMonths ? this.ramaData().debtFreeMonth : this.geraData().debtFreeMonth;
   });
-
-  // Helper method for templates referencing loan balances by ID
-  getLoanNovBalance(loanId: string): number {
-    return loanId === 'rama-sbi' ? this.ramaNovBalance() : this.geraNovBalance();
-  }
-
-  getLoanPrepayment(loanId: string): number {
-    const data = loanId === 'rama-sbi' ? this.ramaData() : this.geraData();
-    const novRow = data.schedule.find(r => r.monthKey === '2026-11');
-    if (novRow) return novRow.totalPrepayment;
-    const loan = loanId === 'rama-sbi' ? this.ramaLoan() : this.geraLoan();
-    return (loan.defaultSurajPrepay || 0) + (loan.defaultVrushaliPrepay || 0);
-  }
-
-  getLoanDebtFree(loanId: string): string {
-    return loanId === 'rama-sbi' ? this.ramaData().debtFreeMonth : this.geraData().debtFreeMonth;
-  }
 
   setActiveTab(tab: ActiveTab) {
     this.activeTab.set(tab);
