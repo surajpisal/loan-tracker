@@ -32,56 +32,78 @@ export class AppComponent {
   reasons = [
     'Paid as planned',
     'Annual Bonus Added',
+    'Suraj 4.3L Lump Sum + Prepayment',
+    'Vrushali 35k (Suraj 0)',
     'Missed: Advance Tax',
     'Missed: Medical Emergency',
     'Missed: Vacation/Festival Outflow',
     'Partial: Lower savings this month',
-    'Rate reduced to 7.90%',
     'Rate adjusted'
   ];
 
+  // Base Loan references
   ramaLoan = computed(() => this.loans().find(l => l.id === 'rama-sbi')!);
-  ramaData = computed(() => this.loanService.computeSchedule(this.ramaLoan()));
-
   geraLoan = computed(() => this.loans().find(l => l.id === 'gera-hdfc')!);
+
+  // Dynamic schedules computed from Jan 2026
+  ramaData = computed(() => this.loanService.computeSchedule(this.ramaLoan()));
   geraData = computed(() => this.loanService.computeSchedule(this.geraLoan()));
 
-  // Active current month balance (Nov 2026) derived directly from the computed schedule
-  ramaCurrentBalance = computed(() => {
+  // Active November 2026 Balances derived directly from the schedule rows
+  ramaNovBalance = computed(() => {
     const novRow = this.ramaData().schedule.find(r => r.monthKey === '2026-11');
     return novRow ? novRow.endBalance : (this.ramaData().schedule[0]?.endBalance || 0);
   });
 
-  geraCurrentBalance = computed(() => {
+  geraNovBalance = computed(() => {
     const novRow = this.geraData().schedule.find(r => r.monthKey === '2026-11');
     return novRow ? novRow.endBalance : (this.geraData().schedule[0]?.endBalance || 0);
   });
 
-  // Total Outstanding on the dashboard reflects the live post-Nov schedule balances
+  // Top Dashboard Card: Total Outstanding = Sum of active Nov 2026 balances
   totalOutstanding = computed(() => {
-    return this.ramaCurrentBalance() + this.geraCurrentBalance();
+    return this.ramaNovBalance() + this.geraNovBalance();
   });
 
+  // Top Dashboard Card: Monthly Total EMI
   totalEMI = computed(() => {
-    return this.ramaLoan().emi + this.geraLoan().emi;
+    const ramaEmi = this.ramaLoan()?.emi || 80000;
+    const geraEmi = this.geraLoan()?.emi || 40000;
+    return ramaEmi + geraEmi;
   });
 
+  // Top Dashboard Card: Monthly Total Prepay (Nov 2026 actual/planned)
   totalPlannedPrepayment = computed(() => {
-    const novRama = this.ramaData().schedule.find(r => r.monthKey === '2026-11');
-    const novGera = this.geraData().schedule.find(r => r.monthKey === '2026-11');
-    const ramaP = novRama ? novRama.totalPrepayment : (this.ramaLoan().defaultSurajPrepay + this.ramaLoan().defaultVrushaliPrepay);
-    const geraP = novGera ? novGera.totalPrepayment : (this.geraLoan().defaultSurajPrepay + this.geraLoan().defaultVrushaliPrepay);
+    const rRow = this.ramaData().schedule.find(r => r.monthKey === '2026-11');
+    const gRow = this.geraData().schedule.find(r => r.monthKey === '2026-11');
+    const ramaP = rRow ? rRow.totalPrepayment : (this.ramaLoan().defaultSurajPrepay + this.ramaLoan().defaultVrushaliPrepay);
+    const geraP = gRow ? gRow.totalPrepayment : (this.geraLoan().defaultSurajPrepay + this.geraLoan().defaultVrushaliPrepay);
     return ramaP + geraP;
   });
 
+  // Top Dashboard Card: Debt-free date
   portfolioDebtFree = computed(() => {
     const ramaMonths = this.ramaData().schedule.length;
     const geraMonths = this.geraData().schedule.length;
-    if (ramaMonths >= geraMonths) {
-      return this.ramaData().debtFreeMonth;
-    }
-    return this.geraData().debtFreeMonth;
+    return ramaMonths >= geraMonths ? this.ramaData().debtFreeMonth : this.geraData().debtFreeMonth;
   });
+
+  // Helper method for templates referencing loan balances by ID
+  getLoanNovBalance(loanId: string): number {
+    return loanId === 'rama-sbi' ? this.ramaNovBalance() : this.geraNovBalance();
+  }
+
+  getLoanPrepayment(loanId: string): number {
+    const data = loanId === 'rama-sbi' ? this.ramaData() : this.geraData();
+    const novRow = data.schedule.find(r => r.monthKey === '2026-11');
+    if (novRow) return novRow.totalPrepayment;
+    const loan = loanId === 'rama-sbi' ? this.ramaLoan() : this.geraLoan();
+    return (loan.defaultSurajPrepay || 0) + (loan.defaultVrushaliPrepay || 0);
+  }
+
+  getLoanDebtFree(loanId: string): string {
+    return loanId === 'rama-sbi' ? this.ramaData().debtFreeMonth : this.geraData().debtFreeMonth;
+  }
 
   setActiveTab(tab: ActiveTab) {
     this.activeTab.set(tab);
@@ -129,7 +151,7 @@ export class AppComponent {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0
-    }).format(val);
+    }).format(Math.round(val || 0));
   }
 
   exportBackup() {
@@ -150,7 +172,7 @@ export class AppComponent {
         const parsed = JSON.parse(e.target?.result as string);
         if (Array.isArray(parsed)) {
           this.loanService.persist(parsed);
-          alert('Backup restored and synced to cloud successfully!');
+          alert('Backup restored and synced successfully!');
         }
       } catch (err) {
         alert('Invalid JSON backup file.');
